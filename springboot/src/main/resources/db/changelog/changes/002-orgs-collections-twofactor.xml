@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="002-organizations" author="vaultguard">
+        <createTable tableName="organizations">
+            <column name="uuid" type="VARCHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="name" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="billing_email" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="private_key" type="TEXT"/>
+            <column name="public_key" type="TEXT"/>
+            <column name="plan" type="VARCHAR(50)" defaultValue="Free"><constraints nullable="false"/></column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="002-users-organizations" author="vaultguard">
+        <createTable tableName="users_organizations">
+            <column name="uuid" type="VARCHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="user_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="org_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="atype" type="INT"><constraints nullable="false"/></column>
+            <column name="status" type="INT"><constraints nullable="false"/></column>
+            <column name="access_all" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+            <column name="akey" type="TEXT"/>
+            <column name="reset_password_key" type="TEXT"/>
+        </createTable>
+        <addUniqueConstraint tableName="users_organizations" columnNames="user_uuid,org_uuid"
+            constraintName="uq_users_organizations"/>
+        <addForeignKeyConstraint baseTableName="users_organizations" baseColumnNames="user_uuid"
+            referencedTableName="users" referencedColumnNames="uuid"
+            constraintName="fk_uorg_user"/>
+        <addForeignKeyConstraint baseTableName="users_organizations" baseColumnNames="org_uuid"
+            referencedTableName="organizations" referencedColumnNames="uuid"
+            constraintName="fk_uorg_org"/>
+    </changeSet>
+
+    <changeSet id="002-collections" author="vaultguard">
+        <createTable tableName="collections">
+            <column name="uuid" type="VARCHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="org_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="name" type="TEXT"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="collections" baseColumnNames="org_uuid"
+            referencedTableName="organizations" referencedColumnNames="uuid"
+            constraintName="fk_collections_org"/>
+    </changeSet>
+
+    <changeSet id="002-ciphers-collections" author="vaultguard">
+        <createTable tableName="ciphers_collections">
+            <column name="collection_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="cipher_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+        </createTable>
+        <addPrimaryKey tableName="ciphers_collections" columnNames="collection_uuid,cipher_uuid"/>
+    </changeSet>
+
+    <changeSet id="002-users-collections" author="vaultguard">
+        <createTable tableName="users_collections">
+            <column name="collection_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="users_organizations_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="read_only" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+            <column name="hide_passwords" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+        </createTable>
+        <addPrimaryKey tableName="users_collections" columnNames="collection_uuid,users_organizations_uuid"/>
+    </changeSet>
+
+    <changeSet id="002-twofactor" author="vaultguard">
+        <createTable tableName="twofactor">
+            <column name="user_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="type" type="INT"><constraints nullable="false"/></column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true"><constraints nullable="false"/></column>
+            <column name="data" type="TEXT"><constraints nullable="false"/></column>
+            <column name="last_used" type="DATETIME"/>
+        </createTable>
+        <addPrimaryKey tableName="twofactor" columnNames="user_uuid,type"/>
+        <addForeignKeyConstraint baseTableName="twofactor" baseColumnNames="user_uuid"
+            referencedTableName="users" referencedColumnNames="uuid"
+            constraintName="fk_twofactor_user"/>
+    </changeSet>
+
+</databaseChangeLog>

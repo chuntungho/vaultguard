@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-users" author="vaultguard">
+        <createTable tableName="users">
+            <column name="uuid" type="VARCHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="email" type="VARCHAR(255)"><constraints unique="true" nullable="false"/></column>
+            <column name="name" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="password_hash" type="TEXT"><constraints nullable="false"/></column>
+            <column name="kdf_type" type="INT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+            <column name="kdf_iterations" type="INT" defaultValueNumeric="600000"><constraints nullable="false"/></column>
+            <column name="kdf_memory" type="INT"/>
+            <column name="kdf_parallelism" type="INT"/>
+            <column name="private_key" type="TEXT"/>
+            <column name="public_key" type="TEXT"/>
+            <column name="key_hash" type="TEXT"/>
+            <column name="totp_secret" type="VARCHAR(255)"/>
+            <column name="totp_recover" type="TEXT"/>
+            <column name="security_stamp" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="stamp_exception" type="TEXT"/>
+            <column name="password_hint" type="VARCHAR(255)"/>
+            <column name="equivalent_domains" type="TEXT" defaultValue="[]"><constraints nullable="false"/></column>
+            <column name="excluded_globals" type="TEXT" defaultValue="[]"><constraints nullable="false"/></column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true"><constraints nullable="false"/></column>
+            <column name="email_new" type="VARCHAR(255)"/>
+            <column name="email_new_token" type="VARCHAR(255)"/>
+            <column name="verified_at" type="DATETIME"/>
+            <column name="last_verifying_at" type="DATETIME"/>
+            <column name="login_verify_count" type="INT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+            <column name="api_key" type="TEXT"/>
+            <column name="created_at" type="DATETIME"><constraints nullable="false"/></column>
+            <column name="updated_at" type="DATETIME"><constraints nullable="false"/></column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="001-devices" author="vaultguard">
+        <createTable tableName="devices">
+            <column name="uuid" type="VARCHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="user_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="name" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="type" type="INT"><constraints nullable="false"/></column>
+            <column name="push_token" type="VARCHAR(255)"/>
+            <column name="refresh_token" type="TEXT" defaultValue=""><constraints nullable="false"/></column>
+            <column name="twofactor_remember" type="TEXT"/>
+            <column name="last_active" type="DATETIME"/>
+            <column name="created_at" type="DATETIME"><constraints nullable="false"/></column>
+            <column name="updated_at" type="DATETIME"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="devices" baseColumnNames="user_uuid"
+            referencedTableName="users" referencedColumnNames="uuid"
+            constraintName="fk_devices_user"/>
+    </changeSet>
+
+    <changeSet id="001-folders" author="vaultguard">
+        <createTable tableName="folders">
+            <column name="uuid" type="VARCHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="user_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="name" type="TEXT"><constraints nullable="false"/></column>
+            <column name="created_at" type="DATETIME"><constraints nullable="false"/></column>
+            <column name="updated_at" type="DATETIME"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="folders" baseColumnNames="user_uuid"
+            referencedTableName="users" referencedColumnNames="uuid"
+            constraintName="fk_folders_user"/>
+    </changeSet>
+
+    <changeSet id="001-ciphers" author="vaultguard">
+        <createTable tableName="ciphers">
+            <column name="uuid" type="VARCHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="user_uuid" type="VARCHAR(36)"/>
+            <column name="organization_uuid" type="VARCHAR(36)"/>
+            <column name="folder_uuid" type="VARCHAR(36)"/>
+            <column name="type" type="INT"><constraints nullable="false"/></column>
+            <column name="data" type="TEXT"><constraints nullable="false"/></column>
+            <column name="name" type="TEXT"><constraints nullable="false"/></column>
+            <column name="notes" type="TEXT"/>
+            <column name="fields" type="TEXT"/>
+            <column name="password_history" type="TEXT"/>
+            <column name="key" type="TEXT"/>
+            <column name="reprompt" type="INT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+            <column name="deleted_date" type="DATETIME"/>
+            <column name="created_at" type="DATETIME"><constraints nullable="false"/></column>
+            <column name="updated_at" type="DATETIME"><constraints nullable="false"/></column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="001-attachments" author="vaultguard">
+        <createTable tableName="attachments">
+            <column name="id" type="VARCHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="cipher_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
+            <column name="file_name" type="TEXT"><constraints nullable="false"/></column>
+            <column name="file_size" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="akey" type="TEXT"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="attachments" baseColumnNames="cipher_uuid"
+            referencedTableName="ciphers" referencedColumnNames="uuid"
+            constraintName="fk_attachments_cipher"/>
+    </changeSet>
+
+</databaseChangeLog>
