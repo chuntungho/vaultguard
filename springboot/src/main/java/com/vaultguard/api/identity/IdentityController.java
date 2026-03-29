@@ -2,6 +2,7 @@ package com.vaultguard.api.identity;
 
 import com.vaultguard.service.AuthService;
 import com.vaultguard.service.TwoFactorRequiredException;
+import com.vaultguard.service.TwoFactorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +15,11 @@ import java.util.Map;
 public class IdentityController {
 
     private final AuthService authService;
+    private final TwoFactorService twoFactorService;
 
-    public IdentityController(AuthService authService) {
+    public IdentityController(AuthService authService, TwoFactorService twoFactorService) {
         this.authService = authService;
+        this.twoFactorService = twoFactorService;
     }
 
     @PostMapping("/connect/token")
@@ -52,10 +55,12 @@ public class IdentityController {
             if (resp.key() != null) body.put("Key", resp.key());
             return ResponseEntity.ok(body);
         } catch (TwoFactorRequiredException e) {
+            List<Integer> providers = twoFactorService.getEnabledFactors(e.getUserUuid())
+                .stream().map(com.vaultguard.db.entity.TwoFactor::getType).toList();
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "invalid_grant",
                 "error_description", "Two-factor required",
-                "TwoFactorProviders", List.of()
+                "TwoFactorProviders", providers
             ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()

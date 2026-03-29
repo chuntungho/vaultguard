@@ -23,7 +23,7 @@ class TwoFactorServiceTest {
     @BeforeEach
     void setUp() {
         twoFactorRepository = Mockito.mock(TwoFactorRepository.class);
-        twoFactorService = new TwoFactorService(twoFactorRepository, null);
+        twoFactorService = new TwoFactorService(twoFactorRepository);
     }
 
     @Test

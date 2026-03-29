@@ -24,15 +24,15 @@ public class TwoFactorService {
     public static final int TYPE_EMAIL = 1;
 
     private final TwoFactorRepository twoFactorRepository;
-    private final JavaMailSender mailSender;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private JavaMailSender mailSender;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final SecretGenerator secretGenerator = new DefaultSecretGenerator();
     private final CodeGenerator codeGenerator = new DefaultCodeGenerator(HashingAlgorithm.SHA1, 6);
     private final CodeVerifier codeVerifier = new DefaultCodeVerifier(codeGenerator, new SystemTimeProvider());
 
-    public TwoFactorService(TwoFactorRepository twoFactorRepository, JavaMailSender mailSender) {
+    public TwoFactorService(TwoFactorRepository twoFactorRepository) {
         this.twoFactorRepository = twoFactorRepository;
-        this.mailSender = mailSender;
     }
 
     public String generateTotpSecret() {
@@ -100,7 +100,7 @@ public class TwoFactorService {
 
     @Transactional
     public void sendEmailCode(String userUuid, String email) {
-        String code = String.format("%06d", (int)(Math.random() * 1000000));
+        String code = String.format("%06d", new java.security.SecureRandom().nextInt(1_000_000));
         Instant expires = Instant.now().plusSeconds(600);
         TwoFactor tf = twoFactorRepository.findByUserUuidAndType(userUuid, TYPE_EMAIL)
             .orElseGet(() -> {
