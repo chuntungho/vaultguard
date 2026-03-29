@@ -18,13 +18,16 @@ public class AuthService {
     private final DeviceRepository deviceRepository;
     private final JwtService jwtService;
     private final VaultGuardProperties props;
+    private final TwoFactorService twoFactorService;
 
     public AuthService(UserService userService, DeviceRepository deviceRepository,
-                       JwtService jwtService, VaultGuardProperties props) {
+                       JwtService jwtService, VaultGuardProperties props,
+                       TwoFactorService twoFactorService) {
         this.userService = userService;
         this.deviceRepository = deviceRepository;
         this.jwtService = jwtService;
         this.props = props;
+        this.twoFactorService = twoFactorService;
     }
 
     public record TokenResponse(
@@ -39,7 +42,8 @@ public class AuthService {
 
     @Transactional
     public TokenResponse loginWithPassword(String username, String password,
-                                           String deviceIdentifier, String deviceName, int deviceType) {
+                                           String deviceIdentifier, String deviceName, int deviceType,
+                                           Integer twoFactorType, String twoFactorToken) {
         User user = userService.findByEmail(username)
             .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
         if (!user.isEnabled()) {
@@ -47,6 +51,13 @@ public class AuthService {
         }
         if (!userService.verifyPassword(password, user)) {
             throw new IllegalArgumentException("Invalid credentials");
+        }
+
+        if (twoFactorService.hasTwoFactor(user.getUuid())) {
+            if (twoFactorType == null || twoFactorToken == null ||
+                !twoFactorService.validateTwoFactor(user.getUuid(), twoFactorType, twoFactorToken)) {
+                throw new TwoFactorRequiredException(user.getUuid());
+            }
         }
 
         Device device = deviceRepository.findByUserUuidAndName(user.getUuid(), deviceIdentifier)

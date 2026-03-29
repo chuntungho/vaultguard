@@ -1,10 +1,12 @@
 package com.vaultguard.api.identity;
 
 import com.vaultguard.service.AuthService;
+import com.vaultguard.service.TwoFactorRequiredException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -25,13 +27,15 @@ public class IdentityController {
         @RequestParam(value = "refresh_token", required = false) String refreshToken,
         @RequestParam(value = "deviceIdentifier", required = false) String deviceIdentifier,
         @RequestParam(value = "deviceName", required = false) String deviceName,
-        @RequestParam(value = "deviceType", required = false, defaultValue = "0") int deviceType
+        @RequestParam(value = "deviceType", required = false, defaultValue = "0") int deviceType,
+        @RequestParam(value = "twoFactorToken", required = false) String twoFactorToken,
+        @RequestParam(value = "twoFactorProvider", required = false) Integer twoFactorProvider
     ) {
         try {
             AuthService.TokenResponse resp;
             if ("password".equals(grantType)) {
                 resp = authService.loginWithPassword(username, password,
-                    deviceIdentifier, deviceName, deviceType);
+                    deviceIdentifier, deviceName, deviceType, twoFactorProvider, twoFactorToken);
             } else if ("refresh_token".equals(grantType)) {
                 resp = authService.refreshToken(refreshToken);
             } else {
@@ -47,6 +51,12 @@ public class IdentityController {
             body.put("scope", resp.scope());
             if (resp.key() != null) body.put("Key", resp.key());
             return ResponseEntity.ok(body);
+        } catch (TwoFactorRequiredException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "invalid_grant",
+                "error_description", "Two-factor required",
+                "TwoFactorProviders", List.of()
+            ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                 .body(Map.of("error", "invalid_grant", "error_description", e.getMessage()));
