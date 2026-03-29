@@ -3,6 +3,7 @@ package com.vaultguard.service;
 import com.vaultguard.db.entity.*;
 import com.vaultguard.db.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -30,25 +31,28 @@ public class SyncService {
         this.organizationRepository = organizationRepository;
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Object> buildSyncResponse(String userUuid) {
         User user = userService.findById(userUuid)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         List<Cipher> ciphers = cipherService.findAllAccessibleByUser(userUuid);
         List<Folder> folders = folderService.findByUserUuid(userUuid);
-        List<OrgMembership> memberships = orgMembershipRepository.findByUserUuid(userUuid);
+        List<OrgMembership> confirmedMemberships = orgMembershipRepository.findByUserUuid(userUuid).stream()
+            .filter(m -> m.getStatus() == 2)
+            .toList();
 
         List<Map<String, Object>> cipherResponses = ciphers.stream()
             .map(this::toCipherResponse).toList();
         List<Map<String, Object>> folderResponses = folders.stream()
             .map(this::toFolderResponse).toList();
-        List<Map<String, Object>> collectionResponses = memberships.stream()
+        List<Map<String, Object>> collectionResponses = confirmedMemberships.stream()
             .flatMap(m -> collectionRepository.findByOrgUuid(m.getOrgUuid()).stream())
             .map(this::toCollectionResponse)
             .toList();
 
         Map<String, Object> resp = new LinkedHashMap<>();
-        resp.put("Profile", toProfileResponse(user, memberships));
+        resp.put("Profile", toProfileResponse(user, confirmedMemberships));
         resp.put("Folders", folderResponses);
         resp.put("Collections", collectionResponses);
         resp.put("Ciphers", cipherResponses);
