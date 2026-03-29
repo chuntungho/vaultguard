@@ -71,4 +71,41 @@ class IdentityControllerTest {
             .param("deviceName", "Test Browser"))
             .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void refreshTokenReturnsNewAccessToken() throws Exception {
+        String deviceId = UuidUtil.newUuid();
+        // First login to get a refresh token
+        String loginResponse = mockMvc.perform(post("/identity/connect/token")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("grant_type", "password")
+            .param("username", "login@example.com")
+            .param("password", "correct-hash")
+            .param("scope", "api offline_access")
+            .param("client_id", "browser")
+            .param("deviceType", "3")
+            .param("deviceIdentifier", deviceId)
+            .param("deviceName", "Test Browser"))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        String refreshToken = com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
+            .readTree(loginResponse).get("refresh_token").asText();
+
+        mockMvc.perform(post("/identity/connect/token")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("grant_type", "refresh_token")
+            .param("refresh_token", refreshToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.access_token").isNotEmpty())
+            .andExpect(jsonPath("$.refresh_token").isNotEmpty());
+    }
+
+    @Test
+    void unknownGrantTypeReturns400() throws Exception {
+        mockMvc.perform(post("/identity/connect/token")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("grant_type", "client_credentials"))
+            .andExpect(status().isBadRequest());
+    }
 }
