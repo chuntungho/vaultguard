@@ -32,7 +32,12 @@ public class SecurityConfig {
                     "/identity/connect/token",
                     "/api/accounts/register",
                     "/api/accounts/prelogin",
-                    "/icons/**"
+                    "/icons/**",
+                    "/admin/**",          // admin static pages (no user auth)
+                    "/",                   // web vault root
+                    "/app/**",             // web vault SPA routes
+                    "/assets/**",          // web vault assets
+                    "/vw_static/**"        // static assets
                 ).permitAll()
                 .anyRequest().authenticated()
             )

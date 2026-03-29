@@ -13,6 +13,8 @@ public class VaultGuardProperties {
     private int passwordIterations = 600000;
     private String rsaKeyPath = "rsa_key.pem";
     private String attachmentsPath = "data/attachments";
+    private String adminToken = "";
+    private String webVaultPath = "";
     private Jwt jwt = new Jwt();
     private RateLimit rateLimit = new RateLimit();
     private Mail mail = new Mail();
@@ -59,6 +61,10 @@ public class VaultGuardProperties {
     public void setRsaKeyPath(String v) { this.rsaKeyPath = v; }
     public String getAttachmentsPath() { return attachmentsPath; }
     public void setAttachmentsPath(String v) { this.attachmentsPath = v; }
+    public String getAdminToken() { return adminToken; }
+    public void setAdminToken(String v) { this.adminToken = v; }
+    public String getWebVaultPath() { return webVaultPath; }
+    public void setWebVaultPath(String v) { this.webVaultPath = v; }
     public Jwt getJwt() { return jwt; }
     public void setJwt(Jwt v) { this.jwt = v; }
     public RateLimit getRateLimit() { return rateLimit; }
