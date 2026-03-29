@@ -27,6 +27,12 @@
             <column name="akey" type="TEXT"/>
             <column name="reset_password_key" type="TEXT"/>
         </createTable>
+    </changeSet>
+
+    <changeSet id="002-users-organizations-constraints" author="vaultguard">
+        <preConditions onFail="MARK_RAN">
+            <not><dbms type="sqlite"/></not>
+        </preConditions>
         <addUniqueConstraint tableName="users_organizations" columnNames="user_uuid,org_uuid"
             constraintName="uq_users_organizations"/>
         <addForeignKeyConstraint baseTableName="users_organizations" baseColumnNames="user_uuid"
@@ -43,6 +49,12 @@
             <column name="org_uuid" type="VARCHAR(36)"><constraints nullable="false"/></column>
             <column name="name" type="TEXT"><constraints nullable="false"/></column>
         </createTable>
+    </changeSet>
+
+    <changeSet id="002-collections-fk" author="vaultguard">
+        <preConditions onFail="MARK_RAN">
+            <not><dbms type="sqlite"/></not>
+        </preConditions>
         <addForeignKeyConstraint baseTableName="collections" baseColumnNames="org_uuid"
             referencedTableName="organizations" referencedColumnNames="uuid"
             constraintName="fk_collections_org"/>
@@ -75,6 +87,12 @@
             <column name="last_used" type="DATETIME"/>
         </createTable>
         <addPrimaryKey tableName="twofactor" columnNames="user_uuid,type"/>
+    </changeSet>
+
+    <changeSet id="002-twofactor-fk" author="vaultguard">
+        <preConditions onFail="MARK_RAN">
+            <not><dbms type="sqlite"/></not>
+        </preConditions>
         <addForeignKeyConstraint baseTableName="twofactor" baseColumnNames="user_uuid"
             referencedTableName="users" referencedColumnNames="uuid"
             constraintName="fk_twofactor_user"/>

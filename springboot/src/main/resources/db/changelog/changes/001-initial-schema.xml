@@ -50,6 +50,12 @@
             <column name="created_at" type="DATETIME"><constraints nullable="false"/></column>
             <column name="updated_at" type="DATETIME"><constraints nullable="false"/></column>
         </createTable>
+    </changeSet>
+
+    <changeSet id="001-devices-fk" author="vaultguard">
+        <preConditions onFail="MARK_RAN">
+            <not><dbms type="sqlite"/></not>
+        </preConditions>
         <addForeignKeyConstraint baseTableName="devices" baseColumnNames="user_uuid"
             referencedTableName="users" referencedColumnNames="uuid"
             constraintName="fk_devices_user"/>
@@ -63,6 +69,12 @@
             <column name="created_at" type="DATETIME"><constraints nullable="false"/></column>
             <column name="updated_at" type="DATETIME"><constraints nullable="false"/></column>
         </createTable>
+    </changeSet>
+
+    <changeSet id="001-folders-fk" author="vaultguard">
+        <preConditions onFail="MARK_RAN">
+            <not><dbms type="sqlite"/></not>
+        </preConditions>
         <addForeignKeyConstraint baseTableName="folders" baseColumnNames="user_uuid"
             referencedTableName="users" referencedColumnNames="uuid"
             constraintName="fk_folders_user"/>
@@ -96,6 +108,12 @@
             <column name="file_size" type="BIGINT"><constraints nullable="false"/></column>
             <column name="akey" type="TEXT"/>
         </createTable>
+    </changeSet>
+
+    <changeSet id="001-attachments-fk" author="vaultguard">
+        <preConditions onFail="MARK_RAN">
+            <not><dbms type="sqlite"/></not>
+        </preConditions>
         <addForeignKeyConstraint baseTableName="attachments" baseColumnNames="cipher_uuid"
             referencedTableName="ciphers" referencedColumnNames="uuid"
             constraintName="fk_attachments_cipher"/>
