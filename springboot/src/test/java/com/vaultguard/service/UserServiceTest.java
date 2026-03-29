@@ -37,6 +37,8 @@ class UserServiceTest {
         assertThat(user.getEmail()).isEqualTo("test@example.com");
         assertThat(user.getName()).isEqualTo("Test User");
         assertThat(user.getUuid()).isNotBlank();
+        assertThat(user.getPasswordHash()).isNotEqualTo("master-password-hash");
+        assertThat(user.getPasswordHash()).contains(":"); // confirms salt:hash format
     }
 
     @Test
