@@ -26,7 +26,7 @@ public class Cipher {
     @Column(name = "data", nullable = false, columnDefinition = "TEXT")
     private String data; // JSON
 
-    @Column(name = "name", columnDefinition = "TEXT")
+    @Column(name = "name", nullable = false, columnDefinition = "TEXT")
     private String name;
 
     @Column(name = "notes", columnDefinition = "TEXT")
