@@ -32,7 +32,7 @@ public class RsaKeyConfig {
     }
 
     private RSAKey loadFromDisk(Path privatePath, VaultGuardProperties props) throws Exception {
-        Path publicPath = Path.of(props.getRsaKeyPath().replace(".pem", ".pub.pem"));
+        Path publicPath = Path.of(props.getRsaKeyPath().replaceFirst("\\.pem$", ".pub.pem"));
         String privPem = Files.readString(privatePath)
             .replace("-----BEGIN PRIVATE KEY-----", "")
             .replace("-----END PRIVATE KEY-----", "")

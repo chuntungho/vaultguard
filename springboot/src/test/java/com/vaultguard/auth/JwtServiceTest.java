@@ -12,10 +12,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class JwtServiceTest {
 
     private JwtService jwtService;
+    private RSAKey rsaKey;
 
     @BeforeEach
     void setUp() throws Exception {
-        RSAKey rsaKey = new RSAKeyGenerator(2048).keyID("test-key").generate();
+        rsaKey = new RSAKeyGenerator(2048).keyID("test-key").generate();
         VaultGuardProperties props = new VaultGuardProperties();
         jwtService = new JwtService(rsaKey, props);
     }
@@ -34,6 +35,16 @@ class JwtServiceTest {
         String token = jwtService.issueAccessToken("user-uuid-123", "device-uuid-456");
         String tampered = token.substring(0, token.length() - 5) + "XXXXX";
         assertThatThrownBy(() -> jwtService.validateAccessToken(tampered))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void expiredTokenIsRejected() throws Exception {
+        VaultGuardProperties props = new VaultGuardProperties();
+        props.getJwt().setAccessTokenExpirySeconds(-1); // already expired
+        JwtService expiredService = new JwtService(rsaKey, props);
+        String token = expiredService.issueAccessToken("user-uuid-123", "device-uuid-456");
+        assertThatThrownBy(() -> jwtService.validateAccessToken(token))
             .isInstanceOf(IllegalArgumentException.class);
     }
 }
