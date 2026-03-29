@@ -16,10 +16,12 @@ public class SecurityConfig {
 
     private final JwtService jwtService;
     private final RateLimitFilter rateLimitFilter;
+    private final AdminAuthFilter adminAuthFilter;
 
-    public SecurityConfig(JwtService jwtService, RateLimitFilter rateLimitFilter) {
+    public SecurityConfig(JwtService jwtService, RateLimitFilter rateLimitFilter, AdminAuthFilter adminAuthFilter) {
         this.jwtService = jwtService;
         this.rateLimitFilter = rateLimitFilter;
+        this.adminAuthFilter = adminAuthFilter;
     }
 
     @Bean
@@ -34,6 +36,7 @@ public class SecurityConfig {
                     "/api/accounts/prelogin",
                     "/icons/**",
                     "/admin/**",          // admin static pages (no user auth)
+                    "/api/admin/**",       // protected by AdminAuthFilter, not Spring Security user auth
                     "/",                   // web vault root
                     "/app/**",             // web vault SPA routes
                     "/assets/**",          // web vault assets
@@ -42,6 +45,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             // Rate limiting must run before JWT auth to block brute-force before token validation
+            .addFilterBefore(adminAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(new JwtAuthenticationFilter(jwtService),
                 UsernamePasswordAuthenticationFilter.class);

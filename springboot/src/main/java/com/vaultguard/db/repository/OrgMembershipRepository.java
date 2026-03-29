@@ -10,4 +10,5 @@ public interface OrgMembershipRepository extends JpaRepository<OrgMembership, St
     List<OrgMembership> findByOrgUuid(String orgUuid);
     Optional<OrgMembership> findByUserUuidAndOrgUuid(String userUuid, String orgUuid);
     List<OrgMembership> findByUserUuidAndStatus(String userUuid, int status);
+    long countByOrgUuid(String orgUuid);
 }

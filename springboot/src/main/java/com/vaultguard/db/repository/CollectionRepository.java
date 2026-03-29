@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface CollectionRepository extends JpaRepository<Collection, String> {
     List<Collection> findByOrgUuid(String orgUuid);
+    long countByOrgUuid(String orgUuid);
 }
