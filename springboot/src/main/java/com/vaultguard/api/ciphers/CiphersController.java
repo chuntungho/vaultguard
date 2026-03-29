@@ -80,6 +80,9 @@ public class CiphersController {
         resp.put("FolderId", cipher.getFolderUuid());
         resp.put("OrganizationId", cipher.getOrganizationUuid());
         resp.put("Reprompt", cipher.getReprompt());
+        resp.put("Data", cipher.getData());
+        resp.put("Fields", cipher.getFields());
+        resp.put("Key", cipher.getKey());
         resp.put("RevisionDate", cipher.getUpdatedAt());
         resp.put("CreationDate", cipher.getCreatedAt());
         resp.put("DeletedDate", cipher.getDeletedDate());

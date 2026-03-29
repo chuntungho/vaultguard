@@ -77,8 +77,8 @@ public class CipherService {
             if (data.containsKey("fields")) {
                 cipher.setFields(objectMapper.writeValueAsString(data.get("fields")));
             }
-        } catch (Exception e) {
-            cipher.setData("{}");
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize cipher data", e);
         }
     }
 }
