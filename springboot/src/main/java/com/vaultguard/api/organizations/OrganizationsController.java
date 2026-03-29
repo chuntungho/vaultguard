@@ -25,6 +25,9 @@ public class OrganizationsController {
         @RequestBody Map<String, Object> body,
         @AuthenticationPrincipal VaultGuardUserDetails principal) {
         String name = (String) body.get("name");
+        if (name == null || name.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
         String billingEmail = (String) body.getOrDefault("billingEmail", "");
         String key = (String) body.get("key");
         Organization org = organizationService.create(principal.getUserUuid(), name, billingEmail, key);
