@@ -28,10 +28,23 @@ public class AttachmentService {
         this.props = props;
     }
 
+    private Path safeResolve(String cipherUuid, String attachmentId) {
+        Path root = Path.of(props.getAttachmentsPath()).normalize().toAbsolutePath();
+        Path resolved = root.resolve(cipherUuid).resolve(attachmentId).normalize();
+        if (!resolved.startsWith(root)) {
+            throw new IllegalArgumentException("Invalid attachment path");
+        }
+        return resolved;
+    }
+
     @Transactional
     public Attachment store(String cipherUuid, MultipartFile file, String attachmentKey) throws IOException {
         String id = UuidUtil.newUuid();
-        Path dir = Path.of(props.getAttachmentsPath(), cipherUuid);
+        Path root = Path.of(props.getAttachmentsPath()).normalize().toAbsolutePath();
+        Path dir = root.resolve(cipherUuid).normalize();
+        if (!dir.startsWith(root)) {
+            throw new IllegalArgumentException("Invalid cipher UUID in path");
+        }
         Files.createDirectories(dir);
         Path dest = dir.resolve(id);
         file.transferTo(dest);
@@ -47,7 +60,7 @@ public class AttachmentService {
     }
 
     public Resource load(String cipherUuid, String attachmentId) {
-        Path file = Path.of(props.getAttachmentsPath(), cipherUuid, attachmentId);
+        Path file = safeResolve(cipherUuid, attachmentId);
         Resource resource = new FileSystemResource(file);
         if (!resource.exists()) return null;
         return resource;
@@ -55,9 +68,9 @@ public class AttachmentService {
 
     @Transactional
     public void delete(String cipherUuid, String attachmentId) throws IOException {
-        attachmentRepository.deleteById(attachmentId);
-        Path file = Path.of(props.getAttachmentsPath(), cipherUuid, attachmentId);
+        Path file = safeResolve(cipherUuid, attachmentId);
         Files.deleteIfExists(file);
+        attachmentRepository.deleteById(attachmentId);
     }
 
     public List<Attachment> findByCipherUuid(String cipherUuid) {

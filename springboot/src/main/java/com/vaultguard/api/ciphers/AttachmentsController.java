@@ -60,6 +60,7 @@ public class AttachmentsController {
                 Resource resource = attachmentService.load(cipherId, attachmentId);
                 if (resource == null) return ResponseEntity.<Resource>notFound().build();
                 return attachmentService.findById(attachmentId)
+                    .filter(att -> att.getCipherUuid().equals(cipherId))
                     .map(att -> ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION,
                             "attachment; filename=\"" + att.getFileName() + "\"")
@@ -77,6 +78,11 @@ public class AttachmentsController {
         return cipherService.findById(cipherId)
             .filter(c -> principal.getUserUuid().equals(c.getUserUuid()))
             .<ResponseEntity<Void>>map(cipher -> {
+                // Verify the attachment actually belongs to this cipher
+                var attachment = attachmentService.findById(attachmentId);
+                if (attachment.isEmpty() || !attachment.get().getCipherUuid().equals(cipherId)) {
+                    return ResponseEntity.<Void>notFound().build();
+                }
                 try {
                     attachmentService.delete(cipherId, attachmentId);
                     return ResponseEntity.<Void>noContent().build();
