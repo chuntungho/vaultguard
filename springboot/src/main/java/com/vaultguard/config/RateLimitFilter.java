@@ -49,7 +49,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         String ip = request.getRemoteAddr();
         AtomicInteger counter = counts.computeIfAbsent(ip, k -> new AtomicInteger(0));
-        if (counter.incrementAndGet() > props.getRateLimit().getMaxRequests()) {
+        if (counter.incrementAndGet() >= props.getRateLimit().getMaxRequests()) {
             response.setStatus(429);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"too_many_requests\"}");

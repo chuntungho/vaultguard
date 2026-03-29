@@ -36,6 +36,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
             )
+            // Rate limiting must run before JWT auth to block brute-force before token validation
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(new JwtAuthenticationFilter(jwtService),
                 UsernamePasswordAuthenticationFilter.class);
