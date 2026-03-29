@@ -1,5 +1,7 @@
 package com.vaultguard.config;
 
+import java.nio.file.Path;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -22,9 +24,9 @@ public class WebVaultConfig implements WebMvcConfigurer {
         // Web vault from filesystem path (optional)
         String vaultPath = props.getWebVaultPath();
         if (vaultPath != null && !vaultPath.isBlank()) {
-            String location = "file:" + vaultPath.replace("\\", "/");
+            String location = "file:" + Path.of(vaultPath).toAbsolutePath().normalize().toString().replace("\\", "/");
             if (!location.endsWith("/")) location += "/";
-            registry.addResourceHandler("/**")
+            registry.addResourceHandler("/app/**", "/assets/**", "/vw_static/**", "/")
                 .addResourceLocations(location)
                 .resourceChain(false);
         }
