@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VaultGuard Admin — Organizations</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4 shadow">
+  <div class="container-xl">
+    <a class="navbar-brand" href="/admin/index.html">VaultGuard Admin</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto" id="nav-links"></ul>
+      <button class="btn btn-sm btn-outline-secondary" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+</nav>
+<main class="container-xl">
+  <div id="alert-container"></div>
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Organizations</span>
+      <button class="btn btn-sm btn-primary" onclick="loadOrgs()">Reload</button>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-striped table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Organization</th>
+              <th class="text-end">Users</th>
+              <th class="text-end">Ciphers</th>
+              <th class="text-end">Collections</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="orgs-tbody">
+            <tr><td colspan="5" class="text-center text-muted py-3">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/admin/admin-common.js"></script>
+<script>
+  requireAuth();
+  renderNav("Organizations");
+
+  async function loadOrgs() {
+    const resp = await adminFetch("/api/admin/organizations");
+    if (!resp) return;
+    const orgs = await resp.json();
+    const tbody = document.getElementById("orgs-tbody");
+    if (orgs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No organizations</td></tr>';
+      return;
+    }
+    tbody.innerHTML = orgs.map(o => `
+      <tr>
+        <td>
+          <strong>${esc(o.name)}</strong><br>
+          <small class="text-muted">${esc(o.billingEmail || "")}</small><br>
+          <code class="small">${esc(o.id)}</code>
+        </td>
+        <td class="text-end">${o.userCount}</td>
+        <td class="text-end">${o.cipherCount}</td>
+        <td class="text-end">${o.collectionCount}</td>
+        <td class="text-end">
+          <button class="btn btn-link btn-sm p-0 text-danger" onclick="deleteOrg('${o.id}','${esc(o.name)}')">Delete</button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  function esc(s) {
+    return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  async function deleteOrg(id, name) {
+    if (!confirm(`Delete organization "${name}"? This will remove all its ciphers and memberships.`)) return;
+    const resp = await adminFetch(`/api/admin/organizations/${id}`, { method: "DELETE" });
+    if (resp && resp.ok) { showAlert("Organization deleted.", "success"); loadOrgs(); }
+    else showAlert("Failed to delete organization.");
+  }
+
+  loadOrgs();
+</script>
+</body>
+</html>
