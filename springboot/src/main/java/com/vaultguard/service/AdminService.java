@@ -13,28 +13,37 @@ public class AdminService {
     private final UserRepository userRepository;
     private final CipherRepository cipherRepository;
     private final AttachmentRepository attachmentRepository;
+    private final FolderRepository folderRepository;
     private final DeviceRepository deviceRepository;
     private final TwoFactorRepository twoFactorRepository;
     private final OrganizationRepository organizationRepository;
     private final OrgMembershipRepository orgMembershipRepository;
     private final CollectionRepository collectionRepository;
+    private final CollectionCipherRepository collectionCipherRepository;
+    private final CollectionUserRepository collectionUserRepository;
 
     public AdminService(UserRepository userRepository,
                         CipherRepository cipherRepository,
                         AttachmentRepository attachmentRepository,
+                        FolderRepository folderRepository,
                         DeviceRepository deviceRepository,
                         TwoFactorRepository twoFactorRepository,
                         OrganizationRepository organizationRepository,
                         OrgMembershipRepository orgMembershipRepository,
-                        CollectionRepository collectionRepository) {
+                        CollectionRepository collectionRepository,
+                        CollectionCipherRepository collectionCipherRepository,
+                        CollectionUserRepository collectionUserRepository) {
         this.userRepository = userRepository;
         this.cipherRepository = cipherRepository;
         this.attachmentRepository = attachmentRepository;
+        this.folderRepository = folderRepository;
         this.deviceRepository = deviceRepository;
         this.twoFactorRepository = twoFactorRepository;
         this.organizationRepository = organizationRepository;
         this.orgMembershipRepository = orgMembershipRepository;
         this.collectionRepository = collectionRepository;
+        this.collectionCipherRepository = collectionCipherRepository;
+        this.collectionUserRepository = collectionUserRepository;
     }
 
     public List<Map<String, Object>> listUsers() {
@@ -65,9 +74,15 @@ public class AdminService {
 
     @Transactional
     public void deleteUser(String uuid) {
-        deviceRepository.deleteByUserUuid(uuid);
-        twoFactorRepository.deleteAll(twoFactorRepository.findByUserUuidAndEnabled(uuid, true));
+        if (!userRepository.existsById(uuid)) {
+            throw new IllegalArgumentException("User not found: " + uuid);
+        }
+        cipherRepository.findByUserUuid(uuid).forEach(cipher ->
+            attachmentRepository.deleteByCipherUuid(cipher.getUuid()));
         cipherRepository.deleteAll(cipherRepository.findByUserUuid(uuid));
+        folderRepository.deleteAll(folderRepository.findByUserUuid(uuid));
+        deviceRepository.deleteByUserUuid(uuid);
+        twoFactorRepository.deleteAll(twoFactorRepository.findByUserUuid(uuid));
         userRepository.deleteById(uuid);
     }
 
@@ -87,8 +102,7 @@ public class AdminService {
 
     @Transactional
     public void remove2fa(String uuid) {
-        twoFactorRepository.deleteAll(
-            twoFactorRepository.findByUserUuidAndEnabled(uuid, true));
+        twoFactorRepository.deleteAll(twoFactorRepository.findByUserUuid(uuid));
     }
 
     public List<Map<String, Object>> listOrganizations() {
@@ -106,7 +120,18 @@ public class AdminService {
 
     @Transactional
     public void deleteOrganization(String uuid) {
+        if (!organizationRepository.existsById(uuid)) {
+            throw new IllegalArgumentException("Organization not found: " + uuid);
+        }
+        cipherRepository.findByOrganizationUuid(uuid).forEach(cipher ->
+            attachmentRepository.deleteByCipherUuid(cipher.getUuid()));
+        cipherRepository.findByOrganizationUuid(uuid).forEach(cipher ->
+            collectionCipherRepository.deleteByCipherUuid(cipher.getUuid()));
         cipherRepository.deleteAll(cipherRepository.findByOrganizationUuid(uuid));
+        collectionRepository.findByOrgUuid(uuid).forEach(col ->
+            collectionCipherRepository.deleteByCollectionUuid(col.getUuid()));
+        orgMembershipRepository.findByOrgUuid(uuid).forEach(mem ->
+            collectionUserRepository.deleteAll(collectionUserRepository.findByOrgMembershipUuid(mem.getUuid())));
         collectionRepository.deleteAll(collectionRepository.findByOrgUuid(uuid));
         orgMembershipRepository.deleteByOrgUuid(uuid);
         organizationRepository.deleteById(uuid);

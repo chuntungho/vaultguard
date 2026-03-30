@@ -81,7 +81,7 @@ public class AdminController {
         try {
             adminService.deleteOrganization(uuid);
             return ResponseEntity.noContent().build();
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
     }

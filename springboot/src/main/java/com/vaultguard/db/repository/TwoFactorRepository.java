@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TwoFactorRepository extends JpaRepository<TwoFactor, TwoFactor.TwoFactorId> {
+    List<TwoFactor> findByUserUuid(String userUuid);
     List<TwoFactor> findByUserUuidAndEnabled(String userUuid, boolean enabled);
     Optional<TwoFactor> findByUserUuidAndType(String userUuid, int type);
 }
