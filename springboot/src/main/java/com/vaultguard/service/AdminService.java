@@ -133,8 +133,21 @@ public class AdminService {
         twoFactorRepository.deleteAll(twoFactorRepository.findByUserUuid(uuid));
     }
 
-    public List<Map<String, Object>> listOrganizations() {
-        return organizationRepository.findAll().stream().map(org -> {
+    private static final Set<String> ORG_SORT_FIELDS = Set.of("name", "billingEmail");
+
+    public AdminPage<Map<String, Object>> listOrganizations(int page, int size, String sort, String q) {
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = Math.max(page, 0);
+        Sort springSort = parseSort(sort, ORG_SORT_FIELDS);
+        PageRequest pageable = PageRequest.of(safePage, safeSize, springSort);
+
+        Page<Organization> orgs;
+        if (q != null && !q.isBlank()) {
+            orgs = organizationRepository.findByNameContainingIgnoreCaseOrBillingEmailContainingIgnoreCase(q, q, pageable);
+        } else {
+            orgs = organizationRepository.findAll(pageable);
+        }
+        List<Map<String, Object>> rows = orgs.getContent().stream().map(org -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", org.getUuid());
             m.put("name", org.getName());
@@ -144,6 +157,7 @@ public class AdminService {
             m.put("collectionCount", collectionRepository.countByOrgUuid(org.getUuid()));
             return m;
         }).toList();
+        return new AdminPage<>(rows, orgs.getTotalElements());
     }
 
     @Transactional

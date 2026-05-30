@@ -4,6 +4,7 @@ import com.vaultguard.db.entity.User;
 import com.vaultguard.db.repository.CipherRepository;
 import com.vaultguard.db.repository.DeviceRepository;
 import com.vaultguard.db.repository.UserRepository;
+import com.vaultguard.db.repository.OrganizationRepository;
 import com.vaultguard.crypto.PasswordHashService;
 import com.vaultguard.util.UuidUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,7 @@ class AdminControllerTest {
     @Autowired DeviceRepository deviceRepository;
     @Autowired CipherRepository cipherRepository;
     @Autowired PasswordHashService passwordHashService;
+    @Autowired com.vaultguard.db.repository.OrganizationRepository organizationRepository;
 
     @BeforeEach
     void setUp() {
@@ -47,6 +49,16 @@ class AdminControllerTest {
             u.setPasswordHash(passwordHashService.hashForStorage("hash"));
             u.setSecurityStamp(UuidUtil.newUuid());
             userRepository.save(u);
+        }
+
+        organizationRepository.deleteAll();
+        String[] orgNames = {"Acme Inc", "Bravo LLC", "Charlie Corp"};
+        for (String n : orgNames) {
+            com.vaultguard.db.entity.Organization org = new com.vaultguard.db.entity.Organization();
+            org.setUuid(UuidUtil.newUuid());
+            org.setName(n);
+            org.setBillingEmail(n.split(" ")[0].toLowerCase() + "@example.com");
+            organizationRepository.save(org);
         }
     }
 
@@ -169,5 +181,41 @@ class AdminControllerTest {
             .header("X-Admin-Token", "test-admin-token"))
             .andExpect(status().isOk())
             .andExpect(header().string("X-Total-Count", "5"));
+    }
+
+    @Test
+    void adminOrgsList() throws Exception {
+        mockMvc.perform(get("/api/admin/organizations")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(3))
+            .andExpect(header().string("X-Total-Count", "3"));
+    }
+
+    @Test
+    void adminOrgsPaginationSlices() throws Exception {
+        mockMvc.perform(get("/api/admin/organizations?page=0&size=2&sort=name,asc")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].name").value("Acme Inc"))
+            .andExpect(jsonPath("$[1].name").value("Bravo LLC"));
+    }
+
+    @Test
+    void adminOrgsFilterByName() throws Exception {
+        mockMvc.perform(get("/api/admin/organizations?q=acme")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].name").value("Acme Inc"));
+    }
+
+    @Test
+    void adminOrgsSortDesc() throws Exception {
+        mockMvc.perform(get("/api/admin/organizations?sort=name,desc")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].name").value("Charlie Corp"));
     }
 }

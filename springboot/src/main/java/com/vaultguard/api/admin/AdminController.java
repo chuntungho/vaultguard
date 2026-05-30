@@ -80,8 +80,15 @@ public class AdminController {
     // ── Organizations ────────────────────────────────────────────────────────
 
     @GetMapping("/organizations")
-    public ResponseEntity<List<Map<String, Object>>> listOrganizations() {
-        return ResponseEntity.ok(adminService.listOrganizations());
+    public ResponseEntity<List<Map<String, Object>>> listOrganizations(
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "25") int size,
+        @RequestParam(name = "sort", required = false) String sort,
+        @RequestParam(name = "q", required = false) String q) {
+        AdminPage<Map<String, Object>> result = adminService.listOrganizations(page, size, sort, q);
+        return ResponseEntity.ok()
+            .header("X-Total-Count", String.valueOf(result.total()))
+            .body(result.data());
     }
 
     @DeleteMapping("/organizations/{uuid}")
