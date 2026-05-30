@@ -48,10 +48,6 @@ public class AdminService {
         this.collectionUserRepository = collectionUserRepository;
     }
 
-    public List<Map<String, Object>> listUsers() {
-        return listUsers(0, Integer.MAX_VALUE, null, null).data();
-    }
-
     private static final java.util.Set<String> USER_SORT_FIELDS =
         java.util.Set.of("email", "name", "createdAt", "enabled");
 
