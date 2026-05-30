@@ -29,6 +29,18 @@ Output: `admin-ui/dist/`. Deploy these static files behind any HTTP server
 (nginx, S3, etc.). The deployed origin must be listed in
 `vaultguard.admin-cors-origins` on the backend.
 
+## Security
+
+CORS for `/api/admin/**` is controlled by the `vaultguard.admin-cors-origins`
+property on the backend. When set, only the listed origins can reach the admin
+API from a browser.
+
+**Known limitation:** the backend's `WebConfig.java` registers a wildcard
+CORS allow-list for `/api/**`, which covers `/api/admin/**` when
+`admin-cors-origins` is empty. If you deploy with `admin-cors-origins` unset,
+the admin endpoints fall back to wildcard CORS — set the property explicitly
+in production to enforce the allow-list.
+
 ## Test
 
 ```bash

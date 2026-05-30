@@ -63,10 +63,28 @@ export const dataProvider: DataProvider = {
   },
 
   async deleteMany(resource, params) {
-    for (const id of params.ids) {
-      await httpClient(`${urlFor(resource)}/${id}`, { method: "DELETE" });
+    const results = await Promise.allSettled(
+      params.ids.map((id) =>
+        httpClient(`${urlFor(resource)}/${id}`, { method: "DELETE" }).then(() => id)
+      )
+    );
+    const succeeded: (string | number)[] = [];
+    const failedReasons: unknown[] = [];
+    for (const r of results) {
+      if (r.status === "fulfilled") {
+        succeeded.push(r.value as string | number);
+      } else {
+        failedReasons.push(r.reason);
+      }
     }
-    return { data: params.ids };
+    if (failedReasons.length > 0) {
+      const firstErr = failedReasons[0];
+      const msg = firstErr instanceof Error ? firstErr.message : String(firstErr);
+      const err = new Error(`${failedReasons.length} of ${params.ids.length} deletes failed: ${msg}`);
+      (err as Error & { partialIds?: typeof succeeded }).partialIds = succeeded;
+      throw err;
+    }
+    return { data: succeeded as any };
   },
 };
 

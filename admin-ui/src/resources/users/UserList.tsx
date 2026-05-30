@@ -7,6 +7,7 @@ import {
   DateField,
   SearchInput,
   DeleteButton,
+  Pagination,
   useRecordContext,
   useRefresh,
   useNotify,
@@ -116,6 +117,7 @@ export function UserList() {
     <List
       filters={userFilters}
       perPage={25}
+      pagination={<Pagination rowsPerPageOptions={[25, 50, 100]} />}
       sort={{ field: "email", order: "ASC" }}
     >
       <Datagrid>

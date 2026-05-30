@@ -91,17 +91,29 @@ describe("dataProvider CRUD", () => {
     expect(fetchSpy.mock.calls[0][0]).toBe("/api/admin/organizations/org-1");
   });
 
-  it("deleteMany('users') deletes each id in sequence", async () => {
+  it("deleteMany('users') deletes each id in parallel", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response(null, { status: 204 }));
 
     const result = await dataProvider.deleteMany("users", { ids: ["u1", "u2", "u3"] });
 
     expect(fetchSpy).toHaveBeenCalledTimes(3);
-    expect(fetchSpy.mock.calls[0][0]).toBe("/api/admin/users/u1");
-    expect(fetchSpy.mock.calls[1][0]).toBe("/api/admin/users/u2");
-    expect(fetchSpy.mock.calls[2][0]).toBe("/api/admin/users/u3");
+    const calledUrls = fetchSpy.mock.calls.map((c) => c[0] as string);
+    expect(calledUrls).toContain("/api/admin/users/u1");
+    expect(calledUrls).toContain("/api/admin/users/u2");
+    expect(calledUrls).toContain("/api/admin/users/u3");
     expect(result).toEqual({ data: ["u1", "u2", "u3"] });
+  });
+
+  it("deleteMany aggregates errors and reports failures", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(null, { status: 204 })) // u1 ok
+      .mockResolvedValueOnce(new Response("nope", { status: 500 })) // u2 fails
+      .mockResolvedValueOnce(new Response(null, { status: 204 })); // u3 ok
+
+    await expect(
+      dataProvider.deleteMany("users", { ids: ["u1", "u2", "u3"] })
+    ).rejects.toThrow(/1 of 3 deletes failed/);
   });
 
   it("getOne throws NotImplemented", async () => {
