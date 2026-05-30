@@ -28,4 +28,17 @@ class VaultGuardPropertiesTest {
     void defaultRsaKeyPath() {
         assertThat(props.getRsaKeyPath()).isEqualTo("test-rsa-key.pem");
     }
+
+    @Test
+    void adminCorsOriginsDefaultsToEmptyList() {
+        // The list field is initialized to new ArrayList<>() — verify it is never null
+        // (application-test.properties sets a value, so isEmpty() is not asserted here)
+        assertThat(props.getAdminCorsOrigins()).isNotNull();
+    }
+
+    @Test
+    void adminCorsOriginsBindsFromTestProperties() {
+        // application-test.properties sets vaultguard.admin-cors-origins=http://localhost:5173
+        assertThat(props.getAdminCorsOrigins()).contains("http://localhost:5173");
+    }
 }

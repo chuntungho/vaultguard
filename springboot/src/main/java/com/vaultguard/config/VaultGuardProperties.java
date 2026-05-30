@@ -1,5 +1,7 @@
 package com.vaultguard.config;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,6 +17,7 @@ public class VaultGuardProperties {
     private String attachmentsPath = "data/attachments";
     private String adminToken = "";
     private String webVaultPath = "";
+    private List<String> adminCorsOrigins = new ArrayList<>();
     private Jwt jwt = new Jwt();
     private RateLimit rateLimit = new RateLimit();
     private Mail mail = new Mail();
@@ -65,6 +68,8 @@ public class VaultGuardProperties {
     public void setAdminToken(String v) { this.adminToken = v; }
     public String getWebVaultPath() { return webVaultPath; }
     public void setWebVaultPath(String v) { this.webVaultPath = v; }
+    public List<String> getAdminCorsOrigins() { return adminCorsOrigins; }
+    public void setAdminCorsOrigins(List<String> v) { this.adminCorsOrigins = v; }
     public Jwt getJwt() { return jwt; }
     public void setJwt(Jwt v) { this.jwt = v; }
     public RateLimit getRateLimit() { return rateLimit; }
