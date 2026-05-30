@@ -1,5 +1,6 @@
 import type { DataProvider } from "react-admin";
 import { httpClient } from "./httpClient";
+import type { AdminSettings, Diagnostics } from "./types";
 
 const RESOURCE_URL: Record<string, string> = {
   users: "/api/admin/users",
@@ -66,5 +67,49 @@ export const dataProvider: DataProvider = {
       await httpClient(`${urlFor(resource)}/${id}`, { method: "DELETE" });
     }
     return { data: params.ids };
+  },
+};
+
+export const adminActions = {
+  async disableUser(id: string): Promise<{ id: string; enabled: boolean }> {
+    const r = await httpClient<{ id: string; enabled: boolean }>(
+      `/api/admin/users/${id}/disable`,
+      { method: "POST" }
+    );
+    return r.json;
+  },
+
+  async enableUser(id: string): Promise<{ id: string; enabled: boolean }> {
+    const r = await httpClient<{ id: string; enabled: boolean }>(
+      `/api/admin/users/${id}/enable`,
+      { method: "POST" }
+    );
+    return r.json;
+  },
+
+  async deauthUser(id: string): Promise<void> {
+    await httpClient(`/api/admin/users/${id}/deauth`, { method: "POST" });
+  },
+
+  async removeTwoFactor(id: string): Promise<void> {
+    await httpClient(`/api/admin/users/${id}/2fa`, { method: "DELETE" });
+  },
+
+  async getSettings(): Promise<AdminSettings> {
+    const r = await httpClient<AdminSettings>("/api/admin/settings");
+    return r.json;
+  },
+
+  async saveSettings(body: Partial<AdminSettings>): Promise<AdminSettings> {
+    const r = await httpClient<AdminSettings>("/api/admin/settings", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    return r.json;
+  },
+
+  async getDiagnostics(): Promise<Diagnostics> {
+    const r = await httpClient<Diagnostics>("/api/admin/diagnostics");
+    return r.json;
   },
 };
