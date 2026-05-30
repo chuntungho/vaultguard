@@ -26,7 +26,7 @@ export async function httpClient<T = unknown>(
   const headers = new Headers(init.headers);
   const token = sessionStorage.getItem(TOKEN_KEY);
   if (token) headers.set("X-Admin-Token", token);
-  if (init.body && !headers.has("Content-Type")) {
+  if (init.body != null && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
   let response: Response;
@@ -51,5 +51,6 @@ export async function httpClient<T = unknown>(
         : response.statusText || `HTTP ${response.status}`;
     throw new HttpError(response.status, message, parsed);
   }
+  // Caller is responsible for ensuring T matches the actual response shape; no runtime validation.
   return { status: response.status, headers: response.headers, json: parsed as T };
 }

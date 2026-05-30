@@ -83,6 +83,36 @@ describe("httpClient", () => {
     });
   });
 
+  it("auto-sets Content-Type: application/json when body is provided and CT is absent", async () => {
+    sessionStorage.setItem(TOKEN_KEY, "tok");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } })
+    );
+
+    await httpClient("/api/admin/settings", {
+      method: "POST",
+      body: JSON.stringify({ x: 1 }),
+    });
+
+    const init = fetchSpy.mock.calls[0][1] as RequestInit;
+    expect(new Headers(init.headers).get("Content-Type")).toBe("application/json");
+  });
+
+  it("does not override an explicit Content-Type", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } })
+    );
+
+    await httpClient("/api/admin/upload", {
+      method: "POST",
+      body: "binary",
+      headers: { "Content-Type": "application/octet-stream" },
+    });
+
+    const init = fetchSpy.mock.calls[0][1] as RequestInit;
+    expect(new Headers(init.headers).get("Content-Type")).toBe("application/octet-stream");
+  });
+
   it("HttpError is an instance of Error", () => {
     const e = new HttpError(401, "Unauthorized");
     expect(e).toBeInstanceOf(Error);
