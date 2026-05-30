@@ -65,6 +65,6 @@ export const dataProvider: DataProvider = {
     for (const id of params.ids) {
       await httpClient(`${urlFor(resource)}/${id}`, { method: "DELETE" });
     }
-    return { data: params.ids as any };
+    return { data: params.ids };
   },
 };

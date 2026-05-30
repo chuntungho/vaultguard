@@ -107,4 +107,14 @@ describe("dataProvider CRUD", () => {
   it("getOne throws NotImplemented", async () => {
     await expect(dataProvider.getOne("users", { id: "u1" })).rejects.toThrow(/not supported/i);
   });
+
+  it("getList with unknown resource throws", async () => {
+    await expect(
+      dataProvider.getList("ciphers", {
+        pagination: { page: 1, perPage: 10 },
+        sort: { field: "id", order: "ASC" },
+        filter: {},
+      })
+    ).rejects.toThrow(/Unknown resource/);
+  });
 });
