@@ -30,7 +30,7 @@ class VaultGuardPropertiesTest {
     }
 
     @Test
-    void adminCorsOriginsDefaultsToEmptyList() {
+    void adminCorsOriginsIsNeverNull() {
         // The list field is initialized to new ArrayList<>() — verify it is never null
         // (application-test.properties sets a value, so isEmpty() is not asserted here)
         assertThat(props.getAdminCorsOrigins()).isNotNull();
