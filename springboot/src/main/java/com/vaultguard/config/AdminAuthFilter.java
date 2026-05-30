@@ -28,6 +28,10 @@ public class AdminAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            chain.doFilter(request, response);
+            return;
+        }
         String token = request.getHeader("X-Admin-Token");
         if (!verifyAdminToken(token)) {
             response.setStatus(401);

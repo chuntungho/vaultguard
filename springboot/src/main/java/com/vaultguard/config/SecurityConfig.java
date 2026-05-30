@@ -10,6 +10,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -18,17 +22,23 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final RateLimitFilter rateLimitFilter;
     private final AdminAuthFilter adminAuthFilter;
+    private final VaultGuardProperties props;
 
-    public SecurityConfig(JwtService jwtService, RateLimitFilter rateLimitFilter, AdminAuthFilter adminAuthFilter) {
+    public SecurityConfig(JwtService jwtService,
+                          RateLimitFilter rateLimitFilter,
+                          AdminAuthFilter adminAuthFilter,
+                          VaultGuardProperties props) {
         this.jwtService = jwtService;
         this.rateLimitFilter = rateLimitFilter;
         this.adminAuthFilter = adminAuthFilter;
+        this.props = props;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
+            .cors(c -> c.configurationSource(adminCorsConfigurationSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
@@ -65,5 +75,22 @@ public class SecurityConfig {
         FilterRegistrationBean<RateLimitFilter> reg = new FilterRegistrationBean<>(f);
         reg.setEnabled(false);
         return reg;
+    }
+
+    @Bean
+    public CorsConfigurationSource adminCorsConfigurationSource() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        List<String> origins = props.getAdminCorsOrigins();
+        if (origins != null && !origins.isEmpty()) {
+            CorsConfiguration cors = new CorsConfiguration();
+            cors.setAllowedOrigins(origins);
+            cors.setAllowedMethods(List.of("GET", "POST", "DELETE", "OPTIONS"));
+            cors.setAllowedHeaders(List.of("X-Admin-Token", "Content-Type"));
+            cors.setExposedHeaders(List.of("X-Total-Count"));
+            cors.setAllowCredentials(false);
+            cors.setMaxAge(3600L);
+            source.registerCorsConfiguration("/api/admin/**", cors);
+        }
+        return source;
     }
 }

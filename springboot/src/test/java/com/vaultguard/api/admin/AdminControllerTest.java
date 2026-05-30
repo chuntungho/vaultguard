@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -218,5 +219,34 @@ class AdminControllerTest {
             .header("X-Admin-Token", "test-admin-token"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].name").value("Charlie Corp"));
+    }
+
+    @Test
+    void corsPreflightAllowedForConfiguredOrigin() throws Exception {
+        mockMvc.perform(options("/api/admin/users")
+            .header("Origin", "http://localhost:5173")
+            .header("Access-Control-Request-Method", "GET")
+            .header("Access-Control-Request-Headers", "X-Admin-Token"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"))
+            .andExpect(header().string("Access-Control-Expose-Headers", containsString("X-Total-Count")));
+    }
+
+    @Test
+    void corsPreflightRejectedForNonAllowedOrigin() throws Exception {
+        mockMvc.perform(options("/api/admin/users")
+            .header("Origin", "http://evil.example.com")
+            .header("Access-Control-Request-Method", "GET")
+            .header("Access-Control-Request-Headers", "X-Admin-Token"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void corsActualGetIncludesAllowOriginHeader() throws Exception {
+        mockMvc.perform(get("/api/admin/users")
+            .header("Origin", "http://localhost:5173")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
     }
 }
