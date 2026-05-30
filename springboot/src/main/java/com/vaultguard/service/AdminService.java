@@ -2,6 +2,7 @@ package com.vaultguard.service;
 
 import com.vaultguard.db.entity.*;
 import com.vaultguard.db.repository.*;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -48,8 +49,8 @@ public class AdminService {
         this.collectionUserRepository = collectionUserRepository;
     }
 
-    private static final java.util.Set<String> USER_SORT_FIELDS =
-        java.util.Set.of("email", "name", "createdAt", "enabled");
+    private static final Set<String> USER_SORT_FIELDS =
+        Set.of("email", "name", "createdAt", "enabled");
 
     public AdminPage<Map<String, Object>> listUsers(int page, int size, String sort, String q) {
         int safeSize = Math.min(Math.max(size, 1), 100);
@@ -57,7 +58,7 @@ public class AdminService {
         Sort springSort = parseSort(sort, USER_SORT_FIELDS);
         PageRequest pageable = PageRequest.of(safePage, safeSize, springSort);
 
-        org.springframework.data.domain.Page<User> users;
+        Page<User> users;
         if (q != null && !q.isBlank()) {
             users = userRepository.findByEmailContainingIgnoreCaseOrNameContainingIgnoreCase(q, q, pageable);
         } else {
@@ -67,7 +68,7 @@ public class AdminService {
         return new AdminPage<>(rows, users.getTotalElements());
     }
 
-    private static Sort parseSort(String sortParam, java.util.Set<String> allowed) {
+    private static Sort parseSort(String sortParam, Set<String> allowed) {
         if (sortParam == null || sortParam.isBlank()) return Sort.unsorted();
         String[] parts = sortParam.split(",", 2);
         String field = parts[0].trim();

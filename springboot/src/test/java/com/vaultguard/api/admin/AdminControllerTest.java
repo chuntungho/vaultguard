@@ -117,8 +117,7 @@ class AdminControllerTest {
             .andExpect(jsonPath("$.length()").value(2))
             .andExpect(jsonPath("$[0].email").value("alpha@example.com"))
             .andExpect(jsonPath("$[1].email").value("bravo@example.com"))
-            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
-                .header().string("X-Total-Count", "5"));
+            .andExpect(header().string("X-Total-Count", "5"));
     }
 
     @Test
@@ -137,8 +136,7 @@ class AdminControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(1))
             .andExpect(jsonPath("$[0].email").value("alpha@example.com"))
-            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
-                .header().string("X-Total-Count", "1"));
+            .andExpect(header().string("X-Total-Count", "1"));
     }
 
     @Test
@@ -170,7 +168,6 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/users")
             .header("X-Admin-Token", "test-admin-token"))
             .andExpect(status().isOk())
-            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
-                .header().string("X-Total-Count", "5"));
+            .andExpect(header().string("X-Total-Count", "5"));
     }
 }
