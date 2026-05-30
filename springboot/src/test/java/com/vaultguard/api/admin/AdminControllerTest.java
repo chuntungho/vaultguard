@@ -1,5 +1,6 @@
 package com.vaultguard.api.admin;
 
+import com.vaultguard.db.entity.Organization;
 import com.vaultguard.db.entity.User;
 import com.vaultguard.db.repository.CipherRepository;
 import com.vaultguard.db.repository.DeviceRepository;
@@ -28,7 +29,7 @@ class AdminControllerTest {
     @Autowired DeviceRepository deviceRepository;
     @Autowired CipherRepository cipherRepository;
     @Autowired PasswordHashService passwordHashService;
-    @Autowired com.vaultguard.db.repository.OrganizationRepository organizationRepository;
+    @Autowired OrganizationRepository organizationRepository;
 
     @BeforeEach
     void setUp() {
@@ -54,7 +55,7 @@ class AdminControllerTest {
         organizationRepository.deleteAll();
         String[] orgNames = {"Acme Inc", "Bravo LLC", "Charlie Corp"};
         for (String n : orgNames) {
-            com.vaultguard.db.entity.Organization org = new com.vaultguard.db.entity.Organization();
+            Organization org = new Organization();
             org.setUuid(UuidUtil.newUuid());
             org.setName(n);
             org.setBillingEmail(n.split(" ")[0].toLowerCase() + "@example.com");
