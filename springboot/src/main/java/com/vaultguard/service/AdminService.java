@@ -2,6 +2,8 @@ package com.vaultguard.service;
 
 import com.vaultguard.db.entity.*;
 import com.vaultguard.db.repository.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +49,36 @@ public class AdminService {
     }
 
     public List<Map<String, Object>> listUsers() {
-        return userRepository.findAll().stream().map(this::toUserSummary).toList();
+        return listUsers(0, Integer.MAX_VALUE, null, null).data();
+    }
+
+    private static final java.util.Set<String> USER_SORT_FIELDS =
+        java.util.Set.of("email", "name", "createdAt", "enabled");
+
+    public AdminPage<Map<String, Object>> listUsers(int page, int size, String sort, String q) {
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = Math.max(page, 0);
+        Sort springSort = parseSort(sort, USER_SORT_FIELDS);
+        PageRequest pageable = PageRequest.of(safePage, safeSize, springSort);
+
+        org.springframework.data.domain.Page<User> users;
+        if (q != null && !q.isBlank()) {
+            users = userRepository.findByEmailContainingIgnoreCaseOrNameContainingIgnoreCase(q, q, pageable);
+        } else {
+            users = userRepository.findAll(pageable);
+        }
+        List<Map<String, Object>> rows = users.getContent().stream().map(this::toUserSummary).toList();
+        return new AdminPage<>(rows, users.getTotalElements());
+    }
+
+    private static Sort parseSort(String sortParam, java.util.Set<String> allowed) {
+        if (sortParam == null || sortParam.isBlank()) return Sort.unsorted();
+        String[] parts = sortParam.split(",", 2);
+        String field = parts[0].trim();
+        if (!allowed.contains(field)) return Sort.unsorted();
+        Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim()))
+            ? Sort.Direction.DESC : Sort.Direction.ASC;
+        return Sort.by(dir, field);
     }
 
     private Map<String, Object> toUserSummary(User user) {

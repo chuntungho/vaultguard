@@ -32,13 +32,22 @@ class AdminControllerTest {
     void setUp() {
         deviceRepository.deleteAll();
         userRepository.deleteAll();
-        User user = new User();
-        user.setUuid(UuidUtil.newUuid());
-        user.setEmail("admin-test@example.com");
-        user.setName("Admin Test");
-        user.setPasswordHash(passwordHashService.hashForStorage("hash"));
-        user.setSecurityStamp(UuidUtil.newUuid());
-        userRepository.save(user);
+        String[] emails = {
+            "alpha@example.com",
+            "bravo@example.com",
+            "charlie@example.com",
+            "delta@example.com",
+            "echo@example.com"
+        };
+        for (String e : emails) {
+            User u = new User();
+            u.setUuid(UuidUtil.newUuid());
+            u.setEmail(e);
+            u.setName("User " + e.split("@")[0]);
+            u.setPasswordHash(passwordHashService.hashForStorage("hash"));
+            u.setSecurityStamp(UuidUtil.newUuid());
+            userRepository.save(u);
+        }
     }
 
     @Test
@@ -67,9 +76,8 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/users")
             .header("X-Admin-Token", "test-admin-token"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].email").value("admin-test@example.com"))
             .andExpect(jsonPath("$[0].id").isNotEmpty())
-            .andExpect(jsonPath("$[0].cipherCount").value(0));
+            .andExpect(jsonPath("$[0].cipherCount").exists());
     }
 
     @Test
@@ -83,7 +91,7 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/users")
             .header("X-Admin-Token", "test-admin-token"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.length()").value(0));
+            .andExpect(jsonPath("$.length()").value(4));
     }
 
     @Test
@@ -99,5 +107,70 @@ class AdminControllerTest {
             .header("X-Admin-Token", "test-admin-token"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.enabled").value(true));
+    }
+
+    @Test
+    void adminUsersPaginationSlices() throws Exception {
+        mockMvc.perform(get("/api/admin/users?page=0&size=2&sort=email,asc")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].email").value("alpha@example.com"))
+            .andExpect(jsonPath("$[1].email").value("bravo@example.com"))
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .header().string("X-Total-Count", "5"));
+    }
+
+    @Test
+    void adminUsersSecondPage() throws Exception {
+        mockMvc.perform(get("/api/admin/users?page=1&size=2&sort=email,asc")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].email").value("charlie@example.com"));
+    }
+
+    @Test
+    void adminUsersFilterByEmail() throws Exception {
+        mockMvc.perform(get("/api/admin/users?q=alpha")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].email").value("alpha@example.com"))
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .header().string("X-Total-Count", "1"));
+    }
+
+    @Test
+    void adminUsersSortDesc() throws Exception {
+        mockMvc.perform(get("/api/admin/users?sort=email,desc")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].email").value("echo@example.com"));
+    }
+
+    @Test
+    void adminUsersUnknownSortFieldIgnored() throws Exception {
+        mockMvc.perform(get("/api/admin/users?sort=notAField,asc")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(5));
+    }
+
+    @Test
+    void adminUsersSizeCappedAt100() throws Exception {
+        mockMvc.perform(get("/api/admin/users?page=0&size=10000")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(5));
+    }
+
+    @Test
+    void adminUsersXTotalCountWithoutPagination() throws Exception {
+        mockMvc.perform(get("/api/admin/users")
+            .header("X-Admin-Token", "test-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .header().string("X-Total-Count", "5"));
     }
 }

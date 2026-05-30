@@ -1,6 +1,7 @@
 package com.vaultguard.api.admin;
 
 import com.vaultguard.config.VaultGuardProperties;
+import com.vaultguard.service.AdminPage;
 import com.vaultguard.service.AdminService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +26,15 @@ public class AdminController {
     // ── Users ────────────────────────────────────────────────────────────────
 
     @GetMapping("/users")
-    public ResponseEntity<List<Map<String, Object>>> listUsers() {
-        return ResponseEntity.ok(adminService.listUsers());
+    public ResponseEntity<List<Map<String, Object>>> listUsers(
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "25") int size,
+        @RequestParam(name = "sort", required = false) String sort,
+        @RequestParam(name = "q", required = false) String q) {
+        AdminPage<Map<String, Object>> result = adminService.listUsers(page, size, sort, q);
+        return ResponseEntity.ok()
+            .header("X-Total-Count", String.valueOf(result.total()))
+            .body(result.data());
     }
 
     @DeleteMapping("/users/{uuid}")
