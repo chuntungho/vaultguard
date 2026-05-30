@@ -242,11 +242,12 @@ class AdminControllerTest {
     }
 
     @Test
-    void corsActualGetIncludesAllowOriginHeader() throws Exception {
+    void corsActualGetIncludesAllowOriginAndExposeHeaders() throws Exception {
         mockMvc.perform(get("/api/admin/users")
             .header("Origin", "http://localhost:5173")
             .header("X-Admin-Token", "test-admin-token"))
             .andExpect(status().isOk())
-            .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
+            .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"))
+            .andExpect(header().string("Access-Control-Expose-Headers", containsString("X-Total-Count")));
     }
 }
