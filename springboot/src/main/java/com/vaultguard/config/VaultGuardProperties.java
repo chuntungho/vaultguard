@@ -11,7 +11,9 @@ public class VaultGuardProperties {
 
     private String domain = "http://localhost:8080";
     private boolean signupsAllowed = true;
+    private boolean signupsVerify = false;
     private boolean invitationsAllowed = true;
+    private boolean showPasswordHint = true;
     private int passwordIterations = 600000;
     private String rsaKeyPath = "rsa_key.pem";
     private String attachmentsPath = "data/attachments";
@@ -56,6 +58,10 @@ public class VaultGuardProperties {
     public void setDomain(String v) { this.domain = v; }
     public boolean isSignupsAllowed() { return signupsAllowed; }
     public void setSignupsAllowed(boolean v) { this.signupsAllowed = v; }
+    public boolean isSignupsVerify() { return signupsVerify; }
+    public void setSignupsVerify(boolean v) { this.signupsVerify = v; }
+    public boolean isShowPasswordHint() { return showPasswordHint; }
+    public void setShowPasswordHint(boolean v) { this.showPasswordHint = v; }
     public boolean isInvitationsAllowed() { return invitationsAllowed; }
     public void setInvitationsAllowed(boolean v) { this.invitationsAllowed = v; }
     public int getPasswordIterations() { return passwordIterations; }

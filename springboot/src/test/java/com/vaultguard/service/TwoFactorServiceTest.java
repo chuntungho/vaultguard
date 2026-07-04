@@ -2,6 +2,7 @@ package com.vaultguard.service;
 
 import com.vaultguard.db.entity.TwoFactor;
 import com.vaultguard.db.repository.TwoFactorRepository;
+import com.vaultguard.db.repository.UserRepository;
 import com.vaultguard.util.UuidUtil;
 import dev.samstevens.totp.code.CodeGenerator;
 import dev.samstevens.totp.code.DefaultCodeGenerator;
@@ -23,7 +24,8 @@ class TwoFactorServiceTest {
     @BeforeEach
     void setUp() {
         twoFactorRepository = Mockito.mock(TwoFactorRepository.class);
-        twoFactorService = new TwoFactorService(twoFactorRepository);
+        twoFactorService = new TwoFactorService(twoFactorRepository,
+            Mockito.mock(UserRepository.class), Mockito.mock(MailService.class));
     }
 
     @Test

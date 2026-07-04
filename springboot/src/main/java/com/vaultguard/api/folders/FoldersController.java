@@ -26,7 +26,21 @@ public class FoldersController {
         @AuthenticationPrincipal VaultGuardUserDetails principal) {
         List<Folder> folders = folderService.findByUserUuid(principal.getUserUuid());
         List<Map<String, Object>> items = folders.stream().map(this::toFolderResponse).toList();
-        return ResponseEntity.ok(Map.of("Data", items, "Object", "list"));
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("Data", items);
+        resp.put("ContinuationToken", null);
+        resp.put("Object", "list");
+        return ResponseEntity.ok(resp);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> get(
+        @PathVariable String id,
+        @AuthenticationPrincipal VaultGuardUserDetails principal) {
+        return folderService.findById(id)
+            .filter(f -> principal.getUserUuid().equals(f.getUserUuid()))
+            .map(f -> ResponseEntity.ok(toFolderResponse(f)))
+            .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -48,6 +62,14 @@ public class FoldersController {
             .orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updatePost(
+        @PathVariable String id,
+        @RequestBody Map<String, String> body,
+        @AuthenticationPrincipal VaultGuardUserDetails principal) {
+        return update(id, body, principal);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
         @PathVariable String id,
@@ -58,7 +80,14 @@ public class FoldersController {
             return ResponseEntity.notFound().build();
         }
         folderService.delete(found.get());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/delete")
+    public ResponseEntity<Void> deletePost(
+        @PathVariable String id,
+        @AuthenticationPrincipal VaultGuardUserDetails principal) {
+        return delete(id, principal);
     }
 
     private Map<String, Object> toFolderResponse(Folder folder) {

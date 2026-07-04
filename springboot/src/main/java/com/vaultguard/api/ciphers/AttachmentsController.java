@@ -37,7 +37,7 @@ public class AttachmentsController {
         @RequestParam(value = "key", required = false) String attachmentKey,
         @AuthenticationPrincipal VaultGuardUserDetails principal) {
         return cipherService.findById(cipherId)
-            .filter(c -> principal.getUserUuid().equals(c.getUserUuid()))
+            .filter(c -> cipherService.isAccessible(c, principal.getUserUuid()))
             .map(cipher -> {
                 try {
                     Attachment att = attachmentService.store(cipherId, file, attachmentKey);
@@ -55,7 +55,7 @@ public class AttachmentsController {
         @PathVariable String attachmentId,
         @AuthenticationPrincipal VaultGuardUserDetails principal) {
         return cipherService.findById(cipherId)
-            .filter(c -> principal.getUserUuid().equals(c.getUserUuid()))
+            .filter(c -> cipherService.isAccessible(c, principal.getUserUuid()))
             .<ResponseEntity<Resource>>map(cipher -> {
                 Resource resource = attachmentService.load(cipherId, attachmentId);
                 if (resource == null) return ResponseEntity.<Resource>notFound().build();
@@ -76,7 +76,7 @@ public class AttachmentsController {
         @PathVariable String attachmentId,
         @AuthenticationPrincipal VaultGuardUserDetails principal) {
         return cipherService.findById(cipherId)
-            .filter(c -> principal.getUserUuid().equals(c.getUserUuid()))
+            .filter(c -> cipherService.isAccessible(c, principal.getUserUuid()))
             .<ResponseEntity<Void>>map(cipher -> {
                 // Verify the attachment actually belongs to this cipher
                 var attachment = attachmentService.findById(attachmentId);

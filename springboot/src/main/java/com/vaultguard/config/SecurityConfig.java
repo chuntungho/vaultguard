@@ -2,6 +2,7 @@ package com.vaultguard.config;
 
 import com.vaultguard.auth.JwtAuthenticationFilter;
 import com.vaultguard.auth.JwtService;
+import com.vaultguard.db.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,15 +24,18 @@ public class SecurityConfig {
     private final RateLimitFilter rateLimitFilter;
     private final AdminAuthFilter adminAuthFilter;
     private final VaultGuardProperties props;
+    private final UserRepository userRepository;
 
     public SecurityConfig(JwtService jwtService,
                           RateLimitFilter rateLimitFilter,
                           AdminAuthFilter adminAuthFilter,
-                          VaultGuardProperties props) {
+                          VaultGuardProperties props,
+                          UserRepository userRepository) {
         this.jwtService = jwtService;
         this.rateLimitFilter = rateLimitFilter;
         this.adminAuthFilter = adminAuthFilter;
         this.props = props;
+        this.userRepository = userRepository;
     }
 
     @Bean
@@ -43,8 +47,18 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/identity/connect/token",
+                    "/identity/accounts/register",
+                    "/identity/accounts/prelogin",
                     "/api/accounts/register",
                     "/api/accounts/prelogin",
+                    "/api/accounts/password-hint",
+                    "/api/accounts/verify-email-token",
+                    "/api/two-factor/send-email-login",
+                    "/api/devices/knowndevice",
+                    "/api/config",
+                    "/api/alive",
+                    "/api/now",
+                    "/api/version",
                     "/icons/**",
                     "/admin/**",          // admin static pages (no user auth)
                     "/api/admin/**",       // protected by AdminAuthFilter, not Spring Security user auth
@@ -58,7 +72,7 @@ public class SecurityConfig {
             // Rate limiting must run before JWT auth to block brute-force before token validation
             .addFilterBefore(adminAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(new JwtAuthenticationFilter(jwtService),
+            .addFilterBefore(new JwtAuthenticationFilter(jwtService, userRepository),
                 UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

@@ -1,5 +1,7 @@
 package com.vaultguard.auth;
 
+import com.vaultguard.db.entity.User;
+import com.vaultguard.db.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,9 +15,11 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -27,11 +31,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(7);
             try {
                 JwtService.ParsedToken parsed = jwtService.validateAccessToken(token);
-                VaultGuardUserDetails userDetails =
-                    new VaultGuardUserDetails(parsed.userUuid(), parsed.deviceUuid());
-                UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                // Security-stamp check: rotating users.security_stamp invalidates
+                // every previously issued token (deauthorize sessions), same as Rust.
+                User user = userRepository.findById(parsed.userUuid()).orElse(null);
+                boolean valid = user != null && user.isEnabled()
+                    && (parsed.securityStamp() == null
+                        || parsed.securityStamp().equals(user.getSecurityStamp()));
+                if (valid) {
+                    VaultGuardUserDetails userDetails =
+                        new VaultGuardUserDetails(parsed.userUuid(), parsed.deviceUuid());
+                    UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             } catch (Exception ignored) {
                 // Invalid token — leave SecurityContext unauthenticated
             }

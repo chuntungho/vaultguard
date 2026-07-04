@@ -18,17 +18,23 @@ public class SyncService {
     private final CollectionRepository collectionRepository;
     private final OrgMembershipRepository orgMembershipRepository;
     private final OrganizationRepository organizationRepository;
+    private final CipherResponseMapper cipherResponseMapper;
+    private final TwoFactorService twoFactorService;
 
     public SyncService(UserService userService, CipherService cipherService,
                        FolderService folderService, CollectionRepository collectionRepository,
                        OrgMembershipRepository orgMembershipRepository,
-                       OrganizationRepository organizationRepository) {
+                       OrganizationRepository organizationRepository,
+                       CipherResponseMapper cipherResponseMapper,
+                       TwoFactorService twoFactorService) {
         this.userService = userService;
         this.cipherService = cipherService;
         this.folderService = folderService;
         this.collectionRepository = collectionRepository;
         this.orgMembershipRepository = orgMembershipRepository;
         this.organizationRepository = organizationRepository;
+        this.cipherResponseMapper = cipherResponseMapper;
+        this.twoFactorService = twoFactorService;
     }
 
     @Transactional(readOnly = true)
@@ -43,7 +49,7 @@ public class SyncService {
             .toList();
 
         List<Map<String, Object>> cipherResponses = ciphers.stream()
-            .map(this::toCipherResponse).toList();
+            .map(c -> cipherResponseMapper.toResponse(c, userUuid)).toList();
         List<Map<String, Object>> folderResponses = folders.stream()
             .map(this::toFolderResponse).toList();
         List<Map<String, Object>> collectionResponses = confirmedMemberships.stream()
@@ -72,7 +78,7 @@ public class SyncService {
         p.put("Premium", false);
         p.put("MasterPasswordHint", user.getPasswordHint());
         p.put("Culture", "en-US");
-        p.put("TwoFactorEnabled", false);
+        p.put("TwoFactorEnabled", twoFactorService.hasTwoFactor(user.getUuid()));
         p.put("Key", user.getKeyHash());
         p.put("PrivateKey", user.getPrivateKey());
         p.put("SecurityStamp", user.getSecurityStamp());
@@ -86,25 +92,6 @@ public class SyncService {
             .filter(o -> o != null).toList());
         p.put("Object", "profile");
         return p;
-    }
-
-    private Map<String, Object> toCipherResponse(Cipher cipher) {
-        Map<String, Object> resp = new LinkedHashMap<>();
-        resp.put("Id", cipher.getUuid());
-        resp.put("Type", cipher.getType());
-        resp.put("Name", cipher.getName());
-        resp.put("Notes", cipher.getNotes());
-        resp.put("FolderId", cipher.getFolderUuid());
-        resp.put("OrganizationId", cipher.getOrganizationUuid());
-        resp.put("Reprompt", cipher.getReprompt());
-        resp.put("Data", cipher.getData());
-        resp.put("Fields", cipher.getFields());
-        resp.put("Key", cipher.getKey());
-        resp.put("RevisionDate", cipher.getUpdatedAt());
-        resp.put("CreationDate", cipher.getCreatedAt());
-        resp.put("DeletedDate", cipher.getDeletedDate());
-        resp.put("Object", "cipher");
-        return resp;
     }
 
     private Map<String, Object> toFolderResponse(Folder folder) {
@@ -133,7 +120,9 @@ public class SyncService {
         resp.put("Id", collection.getUuid());
         resp.put("OrganizationId", collection.getOrgUuid());
         resp.put("Name", collection.getName());
-        resp.put("Object", "collection");
+        resp.put("ReadOnly", false);
+        resp.put("HidePasswords", false);
+        resp.put("Object", "collectionDetails");
         return resp;
     }
 }

@@ -90,9 +90,10 @@ class CiphersControllerTest {
             .andReturn().getResponse().getContentAsString();
         String cipherId = objectMapper.readTree(response).get("Id").asText();
 
+        // 200 with empty body, matching the Rust EmptyResult contract
         mockMvc.perform(delete("/api/ciphers/" + cipherId)
             .header("Authorization", "Bearer " + authToken))
-            .andExpect(status().isNoContent());
+            .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/ciphers/" + cipherId)
             .header("Authorization", "Bearer " + authToken))

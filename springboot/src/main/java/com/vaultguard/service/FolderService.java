@@ -1,6 +1,8 @@
 package com.vaultguard.service;
 
+import com.vaultguard.db.entity.Cipher;
 import com.vaultguard.db.entity.Folder;
+import com.vaultguard.db.repository.CipherRepository;
 import com.vaultguard.db.repository.FolderRepository;
 import com.vaultguard.util.UuidUtil;
 import org.springframework.stereotype.Service;
@@ -13,9 +15,11 @@ import java.util.Optional;
 public class FolderService {
 
     private final FolderRepository folderRepository;
+    private final CipherRepository cipherRepository;
 
-    public FolderService(FolderRepository folderRepository) {
+    public FolderService(FolderRepository folderRepository, CipherRepository cipherRepository) {
         this.folderRepository = folderRepository;
+        this.cipherRepository = cipherRepository;
     }
 
     @Transactional
@@ -33,8 +37,15 @@ public class FolderService {
         return folderRepository.save(folder);
     }
 
+    /** Deleting a folder moves its ciphers out of the folder; ciphers are never deleted. */
     @Transactional
     public void delete(Folder folder) {
+        for (Cipher cipher : cipherRepository.findByUserUuid(folder.getUserUuid())) {
+            if (folder.getUuid().equals(cipher.getFolderUuid())) {
+                cipher.setFolderUuid(null);
+                cipherRepository.save(cipher);
+            }
+        }
         folderRepository.delete(folder);
     }
 

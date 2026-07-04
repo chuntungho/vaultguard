@@ -126,6 +126,11 @@ public class AdminService {
     @Transactional
     public void deauthUser(String uuid) {
         deviceRepository.deleteByUserUuid(uuid);
+        // Rotating the security stamp invalidates all outstanding access tokens
+        userRepository.findById(uuid).ifPresent(user -> {
+            user.setSecurityStamp(com.vaultguard.util.UuidUtil.newUuid());
+            userRepository.save(user);
+        });
     }
 
     @Transactional
