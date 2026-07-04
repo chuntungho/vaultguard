@@ -7,6 +7,7 @@ import {
   DateField,
   SearchInput,
   DeleteButton,
+  FunctionField,
   Pagination,
   useRecordContext,
   useRefresh,
@@ -127,6 +128,11 @@ export function UserList() {
         <BooleanField source="twoFactorEnabled" label="2FA" />
         <NumberField source="cipherCount" label="Ciphers" />
         <NumberField source="attachmentCount" label="Attachments" />
+        <FunctionField<UserRow>
+          label="Organizations"
+          sortable={false}
+          render={(record) => record.organizations?.map((o) => o.name).join(", ") ?? ""}
+        />
         <DateField source="createdAt" />
         <ToggleEnabledButton />
         <DeauthButton />

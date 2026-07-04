@@ -119,7 +119,30 @@ The following Phase 1 requirements were **missing** from the Java rewrite and ar
   Phases 2–4 per the design spec.
 - New-device login notification emails (requires templated mail, P2).
 
-## 4. Verification
+## 4. Admin UI rewrite (React) — verification
+
+Verified against `2026-05-30-react-admin-ui-design.md` and the task plan
+`2026-05-30-react-admin-ui.md`. **Status: complete**, with one parity gap fixed here.
+
+| Spec area | Status |
+|---|---|
+| Module layout (`httpClient` → `dataProvider`/`adminActions` → resources/pages; `authProvider`) | ✅ matches the boundary contracts; `i18n.ts` sits at `src/i18n.ts` instead of `src/i18n/en.ts` (cosmetic) |
+| `<Admin>` shell with users/organizations resources + `/settings`, `/diagnostics` custom routes, custom layout/menu, login page | ✅ |
+| UserList: columns, Disable/Enable, Deauth + Remove-2FA confirm dialogs, pessimistic delete, bulk delete, sort/filter/pagination (25/50/100) | ✅ — the **Organizations column** required by the spec (and present in the static admin) was missing; added as a `FunctionField` over the `organizations` array the backend already returns |
+| OrgList: name/billingEmail/user/cipher/collection counts, delete, bulk delete | ✅ |
+| Settings page (domain, signups, invitations, iterations, mail) with in-memory banner | ✅ — `passwordIterations` and `mail.from` are shown read-only because `POST /api/admin/settings` only persists domain/signups/invitations; `mail.fromName` not displayed (cosmetic) |
+| Diagnostics read-only key/value table + refresh | ✅ |
+| Auth flow (token via diagnostics probe, sessionStorage, checkError on 401/403, logout) | ✅ |
+| Backend: page/size/sort/q params, size cap 100, sort whitelist, `X-Total-Count`, CORS for `/api/admin/**` with exposed header | ✅ `AdminController`/`AdminService`/`SecurityConfig`; covered by 20 JUnit tests incl. CORS preflight allow/reject |
+| Frontend tests | ✅ 40 Vitest tests pass (httpClient 9, dataProvider 17, authProvider 11, LoginPage 3) |
+| Production build | ✅ `npm run build` (tsc + vite) succeeds |
+| Deliberately deferred by spec | Static HTML admin removal, settings persistence, create/edit pages, Maven build glue, i18n languages, dark mode |
+
+Known limitation already documented in `admin-ui/README.md`: `WebConfig` registers a
+wildcard CORS mapping for `/api/**` which overlaps `/api/admin/**`; the dedicated
+admin CORS source takes precedence when `admin-cors-origins` is set.
+
+## 5. Verification
 
 - `mvn test`: 63 tests, 0 failures (previously 48), including new integration suites:
   `TwoFactorControllerTest` (setup → login challenge → TOTP login → recovery-code login),
