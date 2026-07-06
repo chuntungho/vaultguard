@@ -1,6 +1,6 @@
 package com.vaultguard.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.vaultguard.db.entity.Cipher;
 import com.vaultguard.db.entity.CollectionCipher;
 import com.vaultguard.db.entity.Favorite;
@@ -280,7 +280,7 @@ public class CipherService {
             if (data.containsKey("passwordHistory")) {
                 cipher.setPasswordHistory(objectMapper.writeValueAsString(data.get("passwordHistory")));
             }
-        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+        } catch (tools.jackson.core.JacksonException e) {
             throw new RuntimeException("Failed to serialize cipher data", e);
         }
         if (data.get("favorite") instanceof Boolean favorite) {

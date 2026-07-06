@@ -1,0 +1,21 @@
+# Runtime image for the GraalVM native executable.
+# The binary is built on the CI runner (see .github/workflows/springboot-images.yml):
+#   mvn -Pnative -DskipTests native:compile   ->  target/vaultguard-server
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system vaultguard \
+    && useradd --system --gid vaultguard --home-dir /app vaultguard \
+    && mkdir -p /app/data \
+    && chown -R vaultguard:vaultguard /app
+
+WORKDIR /app
+COPY target/vaultguard-server /app/vaultguard-server
+
+USER vaultguard
+EXPOSE 8080
+VOLUME ["/app/data"]
+
+ENTRYPOINT ["/app/vaultguard-server"]

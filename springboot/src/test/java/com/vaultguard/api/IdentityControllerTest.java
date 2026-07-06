@@ -8,7 +8,7 @@ import com.vaultguard.util.UuidUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -89,7 +89,7 @@ class IdentityControllerTest {
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
 
-        String refreshToken = com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
+        String refreshToken = tools.jackson.databind.json.JsonMapper.builder().build()
             .readTree(loginResponse).get("refresh_token").asText();
 
         mockMvc.perform(post("/identity/connect/token")

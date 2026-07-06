@@ -1,6 +1,6 @@
 package com.vaultguard.api.settings;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.vaultguard.auth.VaultGuardUserDetails;
 import com.vaultguard.db.entity.User;
 import com.vaultguard.service.UserService;

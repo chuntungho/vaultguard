@@ -1,6 +1,6 @@
 package com.vaultguard.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.vaultguard.db.entity.TwoFactor;
 import com.vaultguard.db.entity.User;
 import com.vaultguard.db.repository.TwoFactorRepository;

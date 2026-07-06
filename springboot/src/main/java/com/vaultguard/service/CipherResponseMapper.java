@@ -1,6 +1,6 @@
 package com.vaultguard.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.vaultguard.config.VaultGuardProperties;
 import com.vaultguard.db.entity.Attachment;
 import com.vaultguard.db.entity.Cipher;
